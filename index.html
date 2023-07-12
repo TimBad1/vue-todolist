@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.8/dist/vue.js"></script>
+  <style>
+      .list {
+          padding: 20px;
+          border: 1px solid #ccc;
+          margin: 20px 0;
+      }
+
+      .item {
+          margin: 10px 0;
+      }
+
+      .done {
+          text-decoration: line-through;
+      }
+
+      .form {
+          margin: 20px 0;
+      }
+
+      .display-none {
+          display: none;
+      }
+
+      .fade-enter-active, .fade-leave-active {
+          transition: opacity .5s;
+      }
+
+      .fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */
+      {
+          opacity: 0;
+      }
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <h1>Список задач
+    <like-button v-model="headerLikes"></like-button>
+  </h1>
+  <h2>Количество лайков - {{ countLikes }}</h2>
+  <div v-if="count === 0">Вы великолепны!</div>
+  <div v-else-if="count === 1">Остался последний рывок!</div>
+  <div v-else>Осталось сделать задач: <span class="counter">{{ count }}</span></div>
+  <task-list :tasks="uncompletedTasks"></task-list>
+
+  <div class="form">
+    <input v-model="message">
+    <button
+      :type="button.type"
+      :disabled="isButtonDisabled"
+      @click="addTask">Добавить
+    </button>  <!-- если не передаём параметры можно без скобок addTask() -->
+    <like-button v-model="formLikes"></like-button>
+  </div>
+
+  <transition name="fade">
+    <img src="https://memchik.ru//images/memes/5e2a99f4b1c7e32a8931a282.jpg" v-show="count === 0">
+  </transition>
+
+  <task-list :tasks="completedTasks"></task-list>
+</div>
+</body>
+
+<script>
+  Vue.component('like-button', {
+    model: {
+      prop: 'counter',
+      event: 'counter-change',
+    },
+    props: ['counter'],
+    template: `
+      <div>
+      <button type="button" @click="increment">&#9829;</button>
+      {{ counter }}
+      <button type="button" @click="decrement">&#9825;</button>
+      </div>
+    `,
+    methods: {
+      increment() {
+         this.$emit('counter-change', this.counter + 1);
+      },
+      decrement() {
+        this.$emit('counter-change', this.counter - 1);
+      },
+    }
+  })
+
+  Vue.component('task-list', {
+    props: ['tasks'],
+    template: `
+      <div class="list" :class="{'display-none': tasks.length === 0}">
+      <div class="item" :class="{done: task.done}" v-for="task in tasks" :key="task.key">
+        <input type="checkbox" v-model="task.done">
+        {{ task.text }}
+        <like-button v-model="task.likes"></like-button>
+      </div>
+      </div>
+    `
+  })
+
+  var app = new Vue({
+    el: '#app',
+    data: {
+      headerLikes: 2,
+      formLikes: 3,
+      message: 'Hello vue',
+      tasks: [
+        {
+          text: 'Развернуть окружение в Codepen',
+          done: true,
+          likes: 0,
+        }, {
+          text: 'Пройти курс по Vue',
+          done: false,
+          likes: 3,
+        }, {
+          text: 'Сделать интернет-магазин на Vue',
+          done: false,
+          likes: 0,
+        },
+      ],
+
+      button: {
+        type: 'button',
+      }
+    },
+    methods: {
+      addTask() { // addTask: function() {
+        this.tasks.push({text: this.message, done: false, likes: 0});
+        this.message = '';
+      },
+
+    },
+    computed:{
+      isButtonDisabled() {
+        return !this.message
+      },
+      count() {
+        return this.tasks.filter(task => !task.done).length;
+      },
+      completedTasks() {
+        return this.tasks.filter(task => task.done);
+      },
+      uncompletedTasks() {
+        return this.tasks.filter(task => !task.done);
+      },
+      countLikes() {
+        return this.headerLikes + this.formLikes + this.tasks.reduce((value, task) => value + task.likes, 0)
+      }
+    }
+  })
+</script>
+
+</html>
